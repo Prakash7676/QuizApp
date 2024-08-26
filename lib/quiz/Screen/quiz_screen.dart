@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:quizapp/quiz/screen/result_screen.dart';
 import '../Services/api_services.dart';
 import '../const/colors.dart';
 
@@ -12,24 +13,14 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  var currentQuestionIndex = 0;
+   late Future quiz;
+  var currentIndexOfQuestion = 0;
   int seconds = 60;
   Timer? timer;
-  late Future quiz;
-
-  int points = 0;
-
-  var isLoaded = false;
-
-  var optionsList = [];
-
-  var optionsColor = [
-    Colors.white,
-    Colors.white,
-    Colors.white,
-    Colors.white,
-    Colors.white,
-  ];
+  bool isLoading = false;
+   var optionsList = [];
+  int correctAnswers = 0;
+  int incorrectAnswers = 0;
 
   @override
   void initState() {
@@ -38,11 +29,13 @@ class _QuizScreenState extends State<QuizScreen> {
     startTimer();
   }
 
-  @override
-  void dispose() {
-    timer!.cancel();
-    super.dispose();
-  }
+  var optionsColor = [
+    Colors.white,
+    Colors.white,
+    Colors.white,
+    Colors.white,
+    Colors.white,
+  ];
 
   resetColors() {
     optionsColor = [
@@ -53,7 +46,6 @@ class _QuizScreenState extends State<QuizScreen> {
       Colors.white,
     ];
   }
-
   startTimer() {
     timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -67,12 +59,16 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   gotoNextQuestion() {
-    isLoaded = false;
-    currentQuestionIndex++;
+    setState((){
+       isLoading = false;
+    currentIndexOfQuestion++;
     resetColors();
     timer!.cancel();
     seconds = 60;
     startTimer();
+
+    });
+   
   }
 
   @override
@@ -94,16 +90,22 @@ class _QuizScreenState extends State<QuizScreen> {
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         // for error handling
         if(snapshot.connectionState == ConnectionState.waiting){
-        
+         return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation(Colors.white),
+            ),
+          );
+        }else if(snapshot.hasError){
+            return Center(child: Text("Error:${snapshot.error}", style: const TextStyle(color: Colors.white),),);
         }
-        if (snapshot.hasData) {
+        else if (snapshot.hasData) {
           var data = snapshot.data["results"];
       
-          if (isLoaded == false) {
-            optionsList = data[currentQuestionIndex]["incorrect_answers"];
-            optionsList.add(data[currentQuestionIndex]["correct_answer"]);
+          if (isLoading == false) {
+            optionsList = data[currentIndexOfQuestion]["incorrect_answers"];
+            optionsList.add(data[currentIndexOfQuestion]["correct_answer"]);
             optionsList.shuffle();
-            isLoaded = true;
+            isLoading = true;
           }
       
           return SafeArea(
@@ -116,7 +118,7 @@ class _QuizScreenState extends State<QuizScreen> {
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(50),
-                          border: Border.all(color: lightgrey, width: 2),
+                          border: Border.all(color:Colors.red, width: 3),
                         ),
                         child: IconButton(
                             onPressed: () {
@@ -124,8 +126,8 @@ class _QuizScreenState extends State<QuizScreen> {
                             },
                             icon: const Icon(
                               CupertinoIcons.xmark,
-                              color: Colors.white,
-                              size: 23,
+                              color: Colors.red,
+                              size: 30,
                             )),
                       ),
                       Stack(
@@ -158,7 +160,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      "Question ${currentQuestionIndex + 1} of ${data.length}",
+                      "Question ${currentIndexOfQuestion + 1} of ${data.length}",
                       style: const TextStyle(
                         color: lightgrey,
                         fontSize: 18,
@@ -167,7 +169,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    data[currentQuestionIndex]["question"],
+                    data[currentIndexOfQuestion]["question"],
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -178,27 +180,33 @@ class _QuizScreenState extends State<QuizScreen> {
                     shrinkWrap: true,
                     itemCount: optionsList.length,
                     itemBuilder: (BuildContext context, int index) {
-                      var answer =
-                          data[currentQuestionIndex]["correct_answer"];
+                      var correctAnswer =
+                          data[currentIndexOfQuestion]["correct_answer"];
                   
                       return GestureDetector(
                         onTap: () {
                           setState(() {
-                            if (answer.toString() ==
+                            if (correctAnswer.toString() ==
                                 optionsList[index].toString()) {
                               optionsColor[index] = Colors.green;
-                              points = points + 10;
+                              correctAnswers++;
                             } else {
                               optionsColor[index] = Colors.red;
+                              incorrectAnswers++;
                             }
                   
-                            if (currentQuestionIndex < data.length - 1) {
-                              Future.delayed(const Duration(seconds: 1), () {
+                            if (currentIndexOfQuestion < data.length - 1) {
+                              Future.delayed(const Duration(milliseconds: 400), () {
                                 gotoNextQuestion();
                               });
                             } else {
                               timer!.cancel();
                               //here you can do whatever you want with the results
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=>ResultScreen(
+                                correctAnswers, 
+                                incorrectAnswers,
+                                currentIndexOfQuestion+1,
+                                )));
                             }
                           });
                         },
@@ -228,9 +236,7 @@ class _QuizScreenState extends State<QuizScreen> {
           );
         } else {
           return const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation(Colors.white),
-            ),
+          child: Text("No Data Found"),
           );
         }
       },
