@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-var link = "https://opentdb.com/api.php?amount=10&category=18&difficulty=easy";
+var link = "https://opentdb.com/api.php?amount=50&category=9&difficulty=easy";
 
 getQuiz() async {
   var res = await http.get(Uri.parse(link));
