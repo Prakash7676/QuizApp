@@ -35,5 +35,5 @@ The **Result Screen** is shown after the user has completed the quiz. It provide
 <div style="display: flex; justify-content: space-around;">
   <img src="assets/a.jpg" alt="Image 1" style="width: 30%;"/>
   <img src="assets/b (2).jpg" alt="Image 2" style="width: 30%;"/>
-  <img src="assets/c.jpg" alt="Image 3" style="width: 30%;"/>
+  <img src="assets/d.jpg" alt="Image 3" style="width: 30%;"/>
 </div>
