@@ -155,7 +155,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  Image.asset("ideas.png", width: 200,),
+                  Image.asset("assets/ideas.png", width: 200,),
                   const SizedBox(height: 20),
                   Align(
                     alignment: Alignment.centerLeft,
